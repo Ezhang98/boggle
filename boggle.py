@@ -60,11 +60,8 @@ def printTrie(root):
         print(b.letter, end=" ")
         printTrie(b)
 
-# Check all combinations of strings and return array of 
-def solveBoggle(board, dic):
-    root = Trie(None)
-    for word in dic:
-        trieInsert(root, word)
+# DFS checking using the trie to determine if word exists in dictionary
+def solveBoggle(board, dic, trie):
     visited = []
     solutions = set()
     for i in range(len(board)): 
@@ -75,46 +72,38 @@ def solveBoggle(board, dic):
 
     for i in range(len(board)):
         for j in range(len(board)):
-            solutions.update(findWords(i, j, board, visited, "", root, dic))
+            solutions.update(findWords(i, j, board, visited, "", trie, dic))
                         
     return solutions
 
-# Edit
-def makeBoard(board_size):
-    dic = []
-    dic_file = open("dictionary.txt", "r")
-    while True:
-        word = dic_file.readline()
-        if len(word) == 0:
-            break
-        dic.append(word.rstrip().upper())
 
+def makeBoard(board_size, dic):
     board = [] 
     for i in range(board_size): 
         column = [] 
         for j in range(board_size): 
             column.append(random.choice(random.choice(dic))) 
         board.append(column) 
-    return board, dic
+    return board
 
 
 # Game Loop
-def runBoggle(board_size):
+def runBoggle(board_size, trie, dic):
     print("\n\nStarting game...")
     points = 0
-    board, dic = makeBoard(board_size)
+    board = makeBoard(board_size, dic)
 
     # example board
     # board = [['R','A', 'E', 'L'], ['M', 'O', 'F', 'S'], ['T', 'E', 'O', 'K'], ['N', 'A', 'T', 'I']]
     # dic = ["MEAT", "NEAT", "FOOT", "ROOK", "TOOK", "SEA", "ATE"]
     
     correct_user_words = []
-    solutions = solveBoggle(board, dic)
+    solutions = solveBoggle(board, dic, trie)
 
     while len(solutions) == 0:
         print("Bad board, making new one...")
-        board, dic = makeBoard(board_size)
-        solutions = solveBoggle(board, dic)
+        board = makeBoard(board_size, dic)
+        solutions = solveBoggle(board, dic, trie)
 
     print("\n----- Rules -----")
     print("Create words using adjacent cells.\nNo repeating the same cell.")
@@ -127,7 +116,7 @@ def runBoggle(board_size):
         print("Points: ", points)
         user_input = input("Enter a word, w - solve boggle, q - quit game: ")
         if user_input == 'w':
-            print("All possible words:")
+            print("All other possible words:")
             for i in solutions:
                 print(i)
             print("\nFinal Score: ", points)
@@ -159,10 +148,23 @@ def runBoggle(board_size):
 def main():
     print("\n----- Boggle -----")
     board_size = 4
+    dic = []
+    dic_file = open("dictionary.txt", "r")
+    while True:
+        word = dic_file.readline()
+        if len(word) == 0:
+            break
+        dic.append(word.strip().upper())
+    
+    root = Trie(None)
+    for word in dic:
+        trieInsert(root, word)
+
+
     while True:
         user_input = input("\nw - start game, e - edit board size, q - quit: ")
         if user_input == 'w':
-            runBoggle(board_size)
+            runBoggle(board_size, root, dic)
             pass
         elif user_input == 'e':
             while True:
