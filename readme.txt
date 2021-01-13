@@ -1,5 +1,7 @@
 Boggle
 
+
+
 ----- Rules -----
 Create words using adjacent cells.
 No repeating the same cell.

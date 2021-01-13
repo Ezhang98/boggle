@@ -3,36 +3,70 @@
 # Boggle Solver
 
 import random
-from nltk.corpus import words
-import nltk
-nltk.download('words')
 
-def findWords(i, j, board, visited, word):
+class Trie:
+    def __init__(self, letter):
+        self.branches = []
+        self.letter = letter
+        self.isLeaf = False
+
+
+def trieInsert(root_node, word):
+    node = root_node
+    for letter in word:
+        in_word = False
+        for branch in node.branches:
+            if branch.letter == letter:
+                node = branch
+                in_word = True
+                break
+        if in_word == False:
+            new_node = Trie(letter)
+            node.branches.append(new_node)
+            node = new_node
+    node.isLeaf = True
+
+
+def findWords(i, j, board, visited, word, node, dic):
     word_list = []
     visited[i][j] = True
-    word += board[i][j]
-    # print(word.lower())
-    if len(word) > 2:
-        # print(word.lower())
-        if word.lower() in words.words():
-            word_list.append(word)
-    for row in range(i - 1, i + 2):
-        for col in range(j - 1, j + 2):
-            if row < len(board) and col < len(board):
-                if row >= 0 and col >= 0 and not visited[row][col]:
-                    # print(board[row][col], end=" ")
-                    # for u in visited:
-                    #     print(u)
-                    word_list.extend(findWords(row, col, board, visited, word))
+    in_trie = False
+    temp = node
+    for b in node.branches:
+        if board[i][j] == b.letter:
+            in_trie = True
+            word += board[i][j]
+            temp = b
+    if in_trie == True:
+        if len(word) > 2:
+            if word in dic:
+                word_list.append(word) 
+        if not temp.isLeaf:
+            for row in range(i - 1, i + 2):
+                for col in range(j - 1, j + 2):
+                    if row < len(board) and col < len(board):
+                        if row >= 0 and col >= 0 and not visited[row][col]:
+                            word_list.extend(findWords(row, col, board, visited, word, temp, dic))
     word = word[:-1]
+    temp = node
     visited[i][j] = False
     return word_list
 
 
+def printTrie(root):
+    if root.isLeaf:
+        return
+    for b in root.branches:
+        print(b.letter, end=" ")
+        printTrie(b)
+
 # Check all combinations of strings and return array of 
-def solveBoggle(board):
+def solveBoggle(board, dic):
+    root = Trie(None)
+    for word in sample_dictionary:
+        trieInsert(root, word)
     visited = []
-    solutions = []
+    solutions = set()
     for i in range(len(board)): 
         column = [] 
         for j in range(len(board)): 
@@ -41,11 +75,11 @@ def solveBoggle(board):
 
     for i in range(len(board)):
         for j in range(len(board)):
-            print("starts with", board[i][j])
-            solutions.append(findWords(i, j, board, visited, ""))            
+            solutions.update(findWords(i, j, board, visited, "", root, sample_dictionary))
+                        
     return solutions
 
-
+# Edit
 def makeBoard(board_size):
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     board = [] 
@@ -61,15 +95,17 @@ def makeBoard(board_size):
 def runBoggle(board_size):
     print("\n\nStarting game...")
     points = 0
-    board = makeBoard(board_size)
-    # board = [['G', 'I', 'Z'], ['U','E','K'], ['Q','S','E']]
-    board = [['M','O'], ['M', 'O']]
+    board, dic = makeBoard(board_size)
+    # board = [['R','A', 'E', 'L'], ['M', 'O', 'F', 'S'], ['T', 'E', 'O', 'K'], ['N', 'A', 'T', 'I']]
+    # dic = ["MEAT", "NEAT", "FOOT", "ROOK", "TOOK", "SEA", "ATE"]
     correct_user_words = []
-    solutions = solveBoggle(board)
+    solutions = solveBoggle(board, dic)
+    
     while len(solutions) == 0:
         print("Bad board, making new one...")
-        board = makeBoard(board_size)
-        solutions = solveBoggle(board)
+        board, dic = makeBoard(board_size)
+        solutions = solveBoggle(board, dic)
+
     print("\n----- Rules -----")
     print("Create words using adjacent cells.\nNo repeating the same cell.")
     print("Words must be at least 3 letters long")
@@ -106,7 +142,7 @@ def runBoggle(board_size):
                         print("\nFinal Score: ", points)
                         break   
                 else:
-                    print(user_input, "not found on this board")
+                    print("Sorry,", user_input, "not found in dictionary or not on board")
         
 
 # Main Menu
